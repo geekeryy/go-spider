@@ -28,14 +28,43 @@ type Request struct {
 func main() {
 	// 下载页面
 	client := NewClient()
-	data, err := Download(client, "GET", "https://cd.lianjia.com/xiaoqu/")
+	data, err := Get(client, "https://cd.lianjia.com/xiaoqu/")
 	fmt.Println(err)
-	Fetch(data)
-
+	
 	// 取出数据
+	fetch := Fetch(data)
+	fmt.Println(fetch.Requests)
+
 
 	// 存储数据
 }
+
+type Engine struct {
+	Scans []string
+	WorkerNum int
+}
+
+func (e *Engine) Run() {
+	for  {
+
+	}
+}
+
+type Worker struct {
+	Client *http.Client
+	Url string
+	Resources
+}
+
+func NewWorker(in chan string,out chan Resources)  {
+
+}
+
+func (w *Worker) Work() {
+
+}
+
+
 
 func NewClient() *http.Client {
 	jar, err := cookiejar.New(nil)
@@ -47,7 +76,11 @@ func NewClient() *http.Client {
 	return client
 }
 
-func Download(client *http.Client, method string, url string) (io.ReadCloser, error) {
+func Get(client *http.Client, url string) (io.ReadCloser, error) {
+	return download(client,"GET",url)
+}
+
+func download(client *http.Client, method string, url string) (io.ReadCloser, error) {
 	request, err := http.NewRequest(method, url, nil)
 	if err != nil {
 		return nil, err
@@ -70,6 +103,8 @@ func Fetch(body io.ReadCloser) (resources *Resources) {
 		log.Println("Fetch err: ", err)
 		return
 	}
+	resources=&Resources{}
+	resources.Requests=make([]Request,0)
 
 	doc.Find("[data-role='ershoufang'] [href]").Each(func(i int, selection *goquery.Selection) {
 		if href, ok := selection.Attr("href"); ok {
@@ -79,5 +114,15 @@ func Fetch(body io.ReadCloser) (resources *Resources) {
 			})
 		}
 	})
+
+	doc.Find(".page-box  [href]").Each(func(i int, selection *goquery.Selection) {
+		if href,ok:=selection.Attr("href");ok{
+			resources.Requests=append(resources.Requests,Request{
+				Url: href,
+				Fetcher: Fetch,
+			})
+		}
+	})
+
 	return
 }
