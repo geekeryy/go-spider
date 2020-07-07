@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"go-spider/download"
+	_type "go-spider/type"
 )
 
 func TestFetch(t *testing.T) {
@@ -13,7 +14,9 @@ func TestFetch(t *testing.T) {
 	if err != nil {
 		log.Println("Work err:", err)
 	}
-	fetch := Fetch(body)
+	fetch := Fetch(body,_type.Request{
+		MaxLevel: 3,
+	})
 
 	for k,v:=range fetch.Requests {
 		fmt.Println(k,v.Url)

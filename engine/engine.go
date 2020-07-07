@@ -1,8 +1,7 @@
 package engine
 
 import (
-	"fmt"
-
+	"go-spider/duplicate"
 	"go-spider/scheduler"
 	_type "go-spider/type"
 	"go-spider/worker"
@@ -12,21 +11,28 @@ type Engine struct {
 	Scans     []_type.Request
 	WorkerNum int
 	Scheduler scheduler.Scheduler
+	DefaultStorage _type.Storage
+	RandomWaiting int
+	DuplicateType string
 }
+
+
 
 func (e *Engine) Run() {
 	in := make(chan _type.Request)
 	out := make(chan _type.Resources)
 
 	for _, v := range e.Scans {
-		go e.Scheduler.Submit(in, v)
+		e.Scheduler.Submit(in, v)
 	}
 
 	e.Scheduler.CreateWorkerChan(out)
 
 	for i := 0; i < e.WorkerNum; i++ {
 		workerIn := make(chan _type.Request)
-		go worker.New().Work(workerIn, out, e.Scheduler)
+		go worker.Worker{
+			RandomWaiting: e.RandomWaiting,
+		}.Work(workerIn, out, e.Scheduler)
 	}
 
 	go e.Scheduler.Dispatch(in)
@@ -34,12 +40,18 @@ func (e *Engine) Run() {
 	for {
 		resources := <-out
 		for _, v := range resources.Requests {
-			e.Scheduler.Submit(in, v)
+			if !duplicate.IsDuplicate(e.DuplicateType,v.Url) {
+				e.Scheduler.Submit(in, v)
+			}
 		}
 
-		for k, v := range resources.Datas {
+		for _, v := range resources.Datas {
 			// 数据处理
-			fmt.Println(k, v)
+			if v.Storage != nil {
+				v.Storage.Store(v)
+			} else {
+				e.DefaultStorage.Store(v)
+			}
 		}
 
 	}

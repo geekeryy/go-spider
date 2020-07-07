@@ -1,8 +1,6 @@
 package scheduler
 
 import (
-	"fmt"
-
 	_type "go-spider/type"
 )
 
@@ -51,7 +49,7 @@ func (s *SimpleScheduler) Dispatch(in chan _type.Request) {
 			workerArr = append(workerArr, workers)
 		}
 
-		fmt.Println(len(s.workerChan), len(workerArr), len(requestArr))
+		//fmt.Println(len(s.workerChan), len(workerArr), len(requestArr))
 
 	}
 }

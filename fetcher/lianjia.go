@@ -6,10 +6,15 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 
+	"go-spider/storage"
 	_type "go-spider/type"
 )
 
-func Fetch(body io.ReadCloser) (resources _type.Resources) {
+
+
+
+
+func Fetch(body io.ReadCloser,req _type.Request) (resources _type.Resources) {
 	defer body.Close()
 	doc, err := goquery.NewDocumentFromReader(body)
 	if err != nil {
@@ -25,6 +30,8 @@ func Fetch(body io.ReadCloser) (resources _type.Resources) {
 			resources.Requests = append(resources.Requests, _type.Request{
 				Url:     "https://cd.lianjia.com" + href,
 				Fetcher: Fetch,
+				Level: req.Level+1,
+				MaxLevel: req.MaxLevel,
 			})
 		}
 	})
@@ -34,6 +41,8 @@ func Fetch(body io.ReadCloser) (resources _type.Resources) {
 			resources.Requests = append(resources.Requests, _type.Request{
 				Url:     "https://cd.lianjia.com" + href,
 				Fetcher: Fetch,
+				Level: req.Level+1,
+				MaxLevel: req.MaxLevel,
 			})
 		}
 	})
@@ -43,6 +52,8 @@ func Fetch(body io.ReadCloser) (resources _type.Resources) {
 			resources.Requests = append(resources.Requests, _type.Request{
 				Url:     href,
 				Fetcher: FetchInfo,
+				Level: req.Level+1,
+				MaxLevel: req.MaxLevel,
 			})
 		}
 	})
@@ -57,7 +68,7 @@ func Fetch(body io.ReadCloser) (resources _type.Resources) {
 	return
 }
 
-func FetchInfo(body io.ReadCloser) (resources _type.Resources) {
+func FetchInfo(body io.ReadCloser,req _type.Request) (resources _type.Resources) {
 	defer body.Close()
 	doc, err := goquery.NewDocumentFromReader(body)
 	if err != nil {
@@ -69,6 +80,7 @@ func FetchInfo(body io.ReadCloser) (resources _type.Resources) {
 	resources.Datas = make([]_type.Data, 0)
 
 	resources.Datas = append(resources.Datas, _type.Data{
+		Storage: storage.NewFileStorage(),
 		Type:    "info",
 		Content: doc.Find(".xiaoquInfo").Text(),
 	})
